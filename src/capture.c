@@ -10,9 +10,12 @@ typedef struct {
     uint8_t *data;
 } ImageData;
 
-
+// ImageData *capture(int ms, char *path);
 int main(int argc, char const *argv[]) {
-    av_register_all();
+    // char a[]="./1248.mp4";
+    // char *path=a;
+    // ImageData *caImage=capture(0,path);
+    // printf("%d",caImage->width);
     return 0;
 }
 
@@ -44,7 +47,11 @@ AVFrame *readAVFrame(AVCodecContext *pCodecCtx, AVFormatContext *pFormatCtx, AVF
 
     int timeStamp = ((double)ms / (double)1000) * pFormatCtx->streams[videoStream]->time_base.den / pFormatCtx->streams[videoStream]->time_base.num;
 
-    int ret = av_seek_frame(pFormatCtx, videoStream, timeStamp, AVSEEK_FLAG_BACKWARD);
+    int ret=0;
+    if (timeStamp>0)
+    {
+        ret = av_seek_frame(pFormatCtx, videoStream, timeStamp, AVSEEK_FLAG_BACKWARD);
+    }
 
     if (ret < 0) {
         fprintf(stderr, "av_seek_frame failed\n");
@@ -118,7 +125,7 @@ ImageData *capture(int ms, char *path) {
         return NULL;
     }
 
-    AVCodecContext *pCodecCtx = pFormatCtx->streams[videoStream]->codec;
+    AVCodecParameters *pCodecCtx = pFormatCtx->streams[videoStream]->codecpar;
 
     AVCodec *pCodec = NULL;
 
@@ -129,7 +136,7 @@ ImageData *capture(int ms, char *path) {
     }
 
     AVCodecContext *pNewCodecCtx = avcodec_alloc_context3(pCodec);
-    if (avcodec_copy_context(pNewCodecCtx, pCodecCtx) != 0) {
+    if (avcodec_parameters_to_context(pNewCodecCtx,pCodecCtx) != 0) {
         fprintf(stderr, "avcodec_copy_context failed\n");
         return NULL;
     }
@@ -159,12 +166,12 @@ ImageData *capture(int ms, char *path) {
     imageData->duration = (uint32_t)pFormatCtx->duration;
     imageData->data = getFrameBuffer(pFrameRGB, pNewCodecCtx);
 
-    avcodec_close(pNewCodecCtx);
-    av_free(pCodec);
-    avcodec_close(pCodecCtx);
+    avcodec_free_context(&pNewCodecCtx);
+    // av_freep(pCodec);
+    avcodec_parameters_free(&pCodecCtx);
     av_frame_free(&pFrameRGB);    
-    av_free(frameBuffer);
-    avformat_close_input(&pFormatCtx);
+    // av_freep(frameBuffer);
+    // avformat_close_input(&pFormatCtx);
 
     return imageData;
 }

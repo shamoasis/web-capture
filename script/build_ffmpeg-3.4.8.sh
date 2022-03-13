@@ -8,14 +8,14 @@ WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
 
 FFMPEG_PATH=$(cd $WEB_CAPTURE_PATH/../ffmpeg-3.4.8; pwd)
 
-rm -rf $WEB_CAPTURE_PATH/lib/ffmpeg-3.4.8
+rm -rf $WEB_CAPTURE_PATH/lib/ffmpeg
 
 cd $FFMPEG_PATH
 
 ./configure \
-    --prefix=$WEB_CAPTURE_PATH/lib/ffmpeg-3.4.8
+    --prefix=$WEB_CAPTURE_PATH/lib/ffmpeg
 
-make
+make -j4
 
 make install
 

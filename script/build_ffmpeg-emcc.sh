@@ -6,7 +6,7 @@ NOW_PATH=$(cd $(dirname $0); pwd)
 
 WEB_CAPTURE_PATH=$(cd $NOW_PATH/../; pwd)
 
-FFMPEG_PATH=$(cd $WEB_CAPTURE_PATH/../ffmpeg-3.4.8; pwd)
+FFMPEG_PATH=$(cd $WEB_CAPTURE_PATH/../ffmpeg-4.4.1; pwd)
 
 source $WEB_CAPTURE_PATH/../emsdk/emsdk_env.sh
 
@@ -34,31 +34,18 @@ emconfigure ./configure \
     --disable-ffmpeg \
     --disable-ffplay \
     --disable-ffprobe \
-    --disable-ffserver \
     --disable-doc \
     --disable-swresample \
     --disable-postproc  \
     --disable-avfilter \
-    --disable-pthreads \
-    --disable-w32threads \
-    --disable-os2threads \
+    --enable-pthreads \
+    --enable-w32threads \
+    --enable-os2threads \
     --disable-network \
-    --disable-everything \
-    --enable-protocol=file \
-    --enable-demuxer=mov \
-    --enable-demuxer=matroska \
-    --enable-demuxer=flv \
-    --enable-demuxer=avi \
-    --enable-decoder=h264 \
-    --enable-decoder=hevc \
-    --enable-decoder=mpeg4 \
-    --enable-decoder=vp8 \
-    --enable-decoder=vp9 \
-    --enable-decoder=wmv3 \
     --disable-asm \
-    --disable-debug \
+    --disable-debug
 
-make
+make -j4
 
 make install
 

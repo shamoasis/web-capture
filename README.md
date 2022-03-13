@@ -2,7 +2,7 @@
 
 ## 依赖库&编译工具
 
-* ffmpeg-3.4.8
+* ffmpeg-4.4.1
 * emscripten-2.0.21
 
 ## 支持编码
@@ -26,7 +26,7 @@
 
 * 建议基于 `Ubuntu` 系统进行编译安装，已知 `Windows`、`Mac`都会出现各种文件丢失和环境不一致导致的问题
 
-* 编译前需要下载 [ffmpeg-3.4.8.tar.xz](http://ffmpeg.org/releases/ffmpeg-3.4.8.tar.xz) 并解压至与 `web-capture` 同级的目录
+* 编译前需要下载 [ffmpeg-4.4.1.tar.xz](http://ffmpeg.org/releases/ffmpeg-4.4.1.tar.xz) 并解压至与 `web-capture` 同级的目录
 
 * `emsdk` 安装目录需要与 `web-capture` 同级
 
@@ -64,6 +64,7 @@ http://localhost:3000/demo/index.html
 ```
 npm run build
 ```
+
 
 通过 npm run build 编译项目，最终产物在 dist 目录下
 
