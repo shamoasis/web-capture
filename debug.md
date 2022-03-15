@@ -1,15 +1,18 @@
 # 本地调试
 
-## 原理
-基于ffmpeg实现视频解码与截图，相关功能实现在[capture.c](./src/capture.c)文件，并通过Emscripten把ffmpeg和capture.c编译为js；最终生成文件为[web-capture.js](./dist/web-capture.js)，可以直接引用使用。
+## 1. 工作原理说明
+FFmpeg 是视频处理最常用的开源软件。它功能强大，用途广泛，大量用于视频网站和商业软件（比如 Youtube 和 iTunes），也是许多音频和视频格式的标准编码/解码实现。FFmpeg 本身是一个庞大的项目，包含许多组件和库文件，最常用的是它的命令行工具。
 
+本文基于ffmpeg的库文件，通过编码的方式实现视频解码与截图，相关功能实现在[capture.c](./src/capture.c)文件，并通过Emscripten把ffmpeg和capture.c编译为js文件，最终生成文件为[web-capture.js](./dist/web-capture.js)，可以直接在前端项目引用使用。
+
+详细资料参考如下：
 [asm.js 和 Emscripten 入门教程](https://www.ruanyifeng.com/blog/2017/09/asmjs_emscripten.html)
 
 [emscripten安装](https://emscripten.org/docs/getting_started/downloads.html)
 
 [FFMPEG开发快速入坑](https://zhuanlan.zhihu.com/p/345402619)
 
-## 本地开发调试（Windows+WSL2）
+## 2. 本地开发调试（Windows+WSL2）
 主要环境：Windows10，并开启Linux子系统安装Ubuntu；VSCode安装在windows环境，并通过Remote - WSL扩展连接到Ubuntu子系统。
 ### 1.Windows环境 C/C++开发环境搭建
 1. 安装VScode
@@ -37,7 +40,10 @@
 选中capture.c文件，并按F5按键开启调试，初次会生成launch.json和tasks.json文件
 ![Debug](./pictures/vscode_debug.PNG)
 
-launch.json
+launch.json文件内容如下，一般无需改动；
+
+- miDebuggerPath 为gdb文件路径，如果提示没有，则需要在Ubuntu系统输入以下命令安装：sudo apt install gdb；
+- preLaunchTask 为启动前执行的任务，一般为编译任务，目的是把源文件编译为可执行文件，对应task.json文件
 ```
 {
     // Use IntelliSense to learn about possible attributes.
@@ -75,7 +81,10 @@ launch.json
 }
 ```
 
-tasks.json
+tasks.json 内容说明如下：
+- label 对应launch.json preLaunchTask
+- command 为gcc路径
+- args 为任务执行过程参数，详细说明见下节
 ```
 {
     "tasks": [
@@ -134,8 +143,80 @@ tasks.json
 ```
 /usr/bin/gcc-9 -fdiagnostics-color=always -g /home/meng/repo/web-capture/src/capture.c -L/home/meng/repo/web-capture/lib/ffmpeg4/lib -I/home/meng/repo/web-capture/lib/ffmpeg4/include -lavutil -lavformat -lavcodec -lavutil -lswscale -lm -lpthread -lswresample -ldl -o /home/meng/repo/web-capture/src/capture
 ```
+## 4. 本地编译
+```
+npm run build
+```
+lib/ffmpeg-emmcc 为Emscripten编译ffmpeg之后的文件，可直接用于项目编译，如果编译过程出错，可以执行以下命令手动进行编译
+```
+sh ./script/build_ffmpeg-emcc.sh
+```
+build_ffmpeg-emcc.sh文件中的 emconfigure 支持H.264、H.265（HEVC）、Mpeg2、Mpeg4、VP8、VP9编码，如果有其它编码要求，可以自由进行配置，配置完成后重新执行 sh ./script/build_ffmpeg-emcc.sh 命令，然后重新编译即可；具体配置参考FFMPEG编译说明
 
-### 3. linux 系统常见错误
+在某些极端情况下可以暂时考虑编译ffmpeg所有模块（除了可执行文件，日志，文档等开发非必要模块），解决某些文件解析失败问题；这样会导致最终生成的js文件体积较大，可以后续再优化；
+
+例如示例中的1248.mp4文件，通过ffprob分析如下：
+![](./pictures/vscode_prob.PNG)
+视频长度为0，编码器未知，用该示例中的emconfigure并不能解析，但是利用下边的配置可以正常提取
+```
+emconfigure ./configure \
+    --prefix=$WEB_CAPTURE_PATH/lib/ffmpeg-emcc \
+    --cc="emcc" \
+    --cxx="em++" \
+    --ar="emar" \
+    --cpu=generic \
+    --target-os=none \
+    --arch=x86_32 \
+    --enable-gpl \
+    --enable-version3 \
+    --enable-cross-compile \
+    --disable-logging \
+    --disable-programs \
+    --disable-ffmpeg \
+    --disable-ffplay \
+    --disable-ffprobe \
+    --disable-ffserver \
+    --disable-doc \
+    --disable-asm \
+    --disable-debug \
+```
+
+
+
+## 5. C语言编译
+### 1. 编译过程
+gcc 与 g++ 分别是 gnu 的 c & c++ 编译器 gcc/g++ 在执行编译工作的时候，总共需要4步：
+
+1. 预处理,生成 .i 的文件[预处理器cpp]
+2. 将预处理后的文件转换成汇编语言, 生成文件 .s [编译器egcs]
+3. 有汇编变为目标代码(机器代码)生成 .o 的文件[汇编器as]
+4. 连接目标代码, 生成可执行程序 [链接器ld]
+[详细说明参考](https://www.cnblogs.com/CarpenterLee/p/5994681.html)
+### 2. gcc参数详解
+|选项|	解释|
+|----|----|
+|-ansi|	只支持 ANSI 标准的 C 语法。这一选项将禁止 GNU C 的某些特色， 例如 asm 或 typeof 关键词。|
+|-c|	只编译并生成目标文件。|
+|-DMACRO|	以字符串"1"定义 MACRO 宏。|
+|-DMACRO=DEFN|	以字符串"DEFN"定义 MACRO 宏。|
+|-E|	只运行 C 预编译器。|
+|-g|	生成调试信息。GNU 调试器可利用该信息。|
+|-IDIRECTORY|	指定额外的头文件搜索路径DIRECTORY。|
+|-LDIRECTORY|	指定额外的函数库搜索路径DIRECTORY。|
+|-lLIBRARY|	连接时搜索指定的函数库LIBRARY。|
+|-m486|	针对 486 进行代码优化。|
+|-o FILE|	生成指定的输出文件。用在生成可执行文件时。|
+|-O0|	不进行优化处理。|
+|-O 或 -O1|	优化生成代码。|
+|-O2|	进一步优化。|
+|-O3|	比 -O2 更进一步优化，包括 inline 函数。|
+|-shared|	生成共享目标文件。通常用在建立共享库时。|
+|-static|	禁止使用共享连接。|
+|-UMACRO|	取消对 MACRO 宏的定义。|
+|-w|	不生成任何警告信息。|
+|-Wall|	生成所有警告信息。|
+[参考](https://www.runoob.com/w3cnote/gcc-parameter-detail.html)
+## 6. linux 系统常见错误
 1. 执行 build.sh 报错 build.sh: : not found
 
     说明：Windows与Linux的回车换行转换
@@ -146,16 +227,14 @@ tasks.json
     但如果是要用来执行的shell脚本，我们会看到显示完全正常语法再三检查也没问题但执行时就是提示“syntax error near unexpected token `do”等错误，这正是回车换行符的原因。
     [参考链接](https://www.cnblogs.com/lsdb/p/6781727.html)
 
-    Windows-to-Linux:
+    Windows-to-Linux：.表示不是\n的任意其他字符，$表示行尾匹配；匹配行尾字符不是\n的行，将该字符删除，在我们的上下文中指删除\r
     ```
-    # .表示不是\n的任意其他字符，$表示行尾匹配；匹配行尾字符不是\n的行，将该字符删除，在我们的上下文中指删除\r
     sed -i 's/.$//' filename      
     ```
  
-    Linux-to-Windows:
+    Linux-to-Windows：$表示行尾，整句意思是在行尾追加\r
 
     ```
-    # $表示行尾，整句意思是在行尾追加\r
     sed -i 's/$/\r/' filename　　
     ```
 2. ubuntu系统下source: not found错误

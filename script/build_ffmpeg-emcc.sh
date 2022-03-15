@@ -34,16 +34,29 @@ emconfigure ./configure \
     --disable-ffmpeg \
     --disable-ffplay \
     --disable-ffprobe \
+    --disable-ffserver \
     --disable-doc \
     --disable-swresample \
     --disable-postproc  \
     --disable-avfilter \
-    --enable-pthreads \
-    --enable-w32threads \
-    --enable-os2threads \
+    --disable-pthreads \
+    --disable-w32threads \
+    --disable-os2threads \
     --disable-network \
+    --disable-everything \
+    --enable-protocol=file \
+    --enable-demuxer=mov \
+    --enable-demuxer=matroska \
+    --enable-demuxer=flv \
+    --enable-demuxer=avi \
+    --enable-decoder=h264 \
+    --enable-decoder=hevc \
+    --enable-decoder=mpeg4 \
+    --enable-decoder=vp8 \
+    --enable-decoder=vp9 \
+    --enable-decoder=wmv3 \
     --disable-asm \
-    --disable-debug
+    --disable-debug \
 
 make -j4
 
