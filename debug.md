@@ -134,3 +134,36 @@ tasks.json
 ```
 /usr/bin/gcc-9 -fdiagnostics-color=always -g /home/meng/repo/web-capture/src/capture.c -L/home/meng/repo/web-capture/lib/ffmpeg4/lib -I/home/meng/repo/web-capture/lib/ffmpeg4/include -lavutil -lavformat -lavcodec -lavutil -lswscale -lm -lpthread -lswresample -ldl -o /home/meng/repo/web-capture/src/capture
 ```
+
+### 3. linux 系统常见错误
+1. 执行 build.sh 报错 build.sh: : not found
+
+    说明：Windows与Linux的回车换行转换
+    最初"\r"（return）表示“回车”即回到行首，“\n”（next）表示“换行”即定位到下一行；UNIX和Linux使用“\n”换行，而Windows用“\r\n”(不是\n\r，已验证)，macOS用“\r”。
+
+    Linux文本传到Windows一般少了一个换行；Windows传到Linux的文件，如果是一般文本文档显示正常可不用处理。（这是一般情况，也可能随编缉器的配置而出现别的情况）
+
+    但如果是要用来执行的shell脚本，我们会看到显示完全正常语法再三检查也没问题但执行时就是提示“syntax error near unexpected token `do”等错误，这正是回车换行符的原因。
+    [参考链接](https://www.cnblogs.com/lsdb/p/6781727.html)
+
+    Windows-to-Linux:
+    ```
+    # .表示不是\n的任意其他字符，$表示行尾匹配；匹配行尾字符不是\n的行，将该字符删除，在我们的上下文中指删除\r
+    sed -i 's/.$//' filename      
+    ```
+ 
+    Linux-to-Windows:
+
+    ```
+    # $表示行尾，整句意思是在行尾追加\r
+    sed -i 's/$/\r/' filename　　
+    ```
+2. ubuntu系统下source: not found错误
+    
+    若在ubuntu系统下运行含有source命令的shell脚本时，出现source: not found错误，原因可能是shell的解释器不是bash，需把shell的解释器更改为bash。[参考链接](https://help.aliyun.com/document_detail/109503.html)
+    
+    请按以下步骤更改shell的解释器：
+
+    1. 执行ls -l /bin/sh命令，若得到结果/bin/sh -> dash，则说明shell的解释器为dash。
+    2. 执行dpkg-reconfigure dash命令，然后选择no。 **注意 此步骤需要root权限。**
+    3. 再次执行ls -l /bin/sh命令，若得到结果/bin/sh -> bash，则说明成功更改shell的解释器为bash。
