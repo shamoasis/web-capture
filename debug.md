@@ -84,7 +84,7 @@ launch.json文件内容如下，一般无需改动；
 tasks.json 内容说明如下：
 - label 对应launch.json preLaunchTask
 - command 为gcc路径
-- args 为任务执行过程参数，详细说明见下节
+- args 为任务执行过程参数，详细说明见下节C语言编译说明
 ```
 {
     "tasks": [
@@ -147,7 +147,7 @@ tasks.json 内容说明如下：
 ```
 npm run build
 ```
-lib/ffmpeg-emmcc 为Emscripten编译ffmpeg之后的文件，可直接用于项目编译，如果编译过程出错，可以执行以下命令手动进行编译
+lib/ffmpeg-emmcc 为ffmpeg经过Emscripten编译之后的文件，可直接用于项目编译，如果执行上述命令出错，可以执行以下命令手动进行编译后再执行上述build命令
 ```
 sh ./script/build_ffmpeg-emcc.sh
 ```

@@ -68,6 +68,9 @@ npm run build
 
 通过 npm run build 编译项目，最终产物在 dist 目录下
 
+## 本地调试
+详见[debug.md](./debug.md)
+
 ## 参考文章
 
 https://www.jianshu.com/p/d08c0cff8a77
